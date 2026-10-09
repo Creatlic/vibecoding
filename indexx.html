@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PyCamp: Интерактивный курс Python</title>
+    <style>
+        :root {
+            --bg-main: #1e1e1e;
+            --bg-sidebar: #252526;
+            --text-main: #cccccc;
+            --text-muted: #9cdcfe;
+            --accent: #007acc;
+            --border: #333333;
+            --console-bg: #000000;
+            --console-text: #ffffff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background-color: var(--bg-main); 
+            color: var(--text-main); 
+            line-height: 1.6;
+            display: flex; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+        #sidebar {
+            width: 300px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        #sidebar h2 { color: var(--accent); margin-bottom: 20px; font-size: 1.2rem; }
+        #sidebar ul { list-style: none; }
+        #sidebar li { margin-bottom: 8px; }
+        #sidebar a {
+            color: var(--text-muted);
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            border-radius: 5px;
+            transition: 0.2s;
+        }
+        #sidebar a:hover, #sidebar a.active {
+            background-color: var(--accent);
+            color: #000000;
+        }
+        #main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #task-area {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            border-bottom: 1px solid var(--border);
+        }
+        #code-area {
+            flex-grow: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        #editor-container, #console-container {
+            height: 100%;
+            flex-grow: 1;
+            position: relative;
+        }
+        #editor-container { border-right: 1px solid var(--border); }
+        #controls {
+            padding: 15px 20px;
+            background-color: #2d2d2d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        button {
+            background-color: var(--accent);
+            color: #000000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button:hover { background-color: #005a9e; }
+        #console {
+            background-color: var(--console-bg);
+            color: var(--console-text);
+            font-family: 'Courier New', Courier, monospace;
+            padding: 15px;
+            height: 100%;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+        }
+        .hidden { display: none; }
+        
+        /* Mobile */
+        @media (max-width: 768px) {
+            #sidebar { 
+                width: 250px; 
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                position: absolute;
+                z-index: 100;
+                height: 100vh;
+            }
+            #sidebar.open { transform: translateX(0); }
+            #main-content { width: 100%; }
+            #controls { flex-wrap: wrap; }
+            button { flex-grow: 1; }
+        }
+    </style>
+    <!-- CodeMirror 5 (легче и проще встраивается в один файл, чем v6) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+</head>
+<body>
+
+    <nav id="sidebar">
+        <h2>🐍 PyCamp: Python</h2>
+        <ul>
+            <li><a href="#" data-lesson="0" class="active">0. Привет, мир!</a></li>
+            <li><a href="#" data-lesson="1">1. Переменные и типы</a></li>
+            <li><a href="#" data-lesson="2">2. Ввод данных (input)</a></li>
+            <li><a href="#" data-lesson="3">3. Условный оператор if</a></li>
+            <li><a href="#" data-lesson="4">4. Цикл for</a></li>
+            <li><a href="#" data-lesson="5">5. Цикл while</a></li>
+            <li><a href="#" data-lesson="6">6. Списки (Lists)</a></li>
+            <li><a href="#" data-lesson="7">7. Функции (def)</a></li>
+            <li><a href="#" data-lesson="8">8. Словари (Dictionaries)</a></li>
+            <li><a href="#" data-lesson="9">9. Обработка ошибок (try/except)</a></li>
+        </ul>
+        <button id="mobile-menu-btn" style="display:none; margin-top:20px;">☰ Меню</button>
+    </nav>
+
+    <div id="main-content">
+        <div id="task-area">
+            <h1 id="lesson-title">Урок 0: Привет, мир!</h1>
+            <p id="lesson-desc">Напишите программу, которая выводит на экран фразу "Привет, PyCamp!". Используйте встроенную функцию print().</p>
+        </div>
+        
+        <div id="code-area">
+            <div id="editor-container">
+                <textarea id="code-editor" style="display: none;">
+print("Привет, PyCamp!")
+                </textarea>
+            </div>
+            <div id="console-container">
+                <div id="console">Результат выполнения кода появится здесь...</div>
+            </div>
+        </div>
+
+        <div id="controls">
+            <button id="run-btn">▶ Проверить решение</button>
+            <span id="result-msg"></span>
+            <button id="hint-btn">💡 Подсказка</button>
+        </div>
+    </div>
+
+    <script>
+        const lessons = [
+            {
+                title: "Урок 0: Привет, мир!",
+                desc: "Напишите программу, которая выводит на экран фразу \"Привет, PyCamp!\". Используйте встроенную функцию print().",
+                starterCode: 'print("Привет, PyCamp!")',
+                solution: /print\s*$\s*["']Привет, PyCamp!["']\s*$/i,
+                hint: "Функция print() выводит всё, что внутри скобок, на экран. Не забудьте про кавычки вокруг текста."
+            },
+            {
+                title: "Урок 1: Переменные и типы",
+                desc: "Создайте переменную age со значением 25 и переменную name со значением 'Алексей'. Выведите на экран строку: 'Имя: Алексей, Возраст: 25'.",
+                starterCode: "",
+                solution: /name\s*=\s*["']Алексей["']\s*[\s\S]*age\s*=\s*25\s*[\s\S]*print\s*$\s*["']Имя:\s*Алексей,\s*Возраст:\s*25["']\s*$/i,
+                hint: "Присваивание делается через знак '='. Чтобы вывести переменные внутри строки, можно использовать f-строки: f'Имя: {name}, Возраст: {age}'"
+            },
+            {
+                title: "Урок 2: Ввод данных (input)",
+                desc: "Спросите у пользователя его любимый цвет и сохраните ответ в переменную. Затем выведите: 'Ваш любимый цвет: [цвет]'.",
+                starterCode: "",
+                solution: /color\s*=\s*input\s*$\s*["']Введите.+цвет:["']\s*$\s*[\s\S]*print\s*$\s*f["']Ваш любимый цвет:\s*{\s*color\s*}\s*["']\s*$/i,
+                hint: "Функция input() останавливает программу и ждет, пока пользователь что-то напечатает. Ответ она возвращает в виде строки."
+            },
+            {
+                title: "Урок 3: Условный оператор if",
+                desc: "Напишите программу, которая спрашивает число. Если число больше 10, выведите 'Число большое'. Иначе выведите 'Число маленькое'.",
+                starterCode: "",
+                solution: /num\s*=\s*int\s*$\s*input\s*$\s*["']Введите.+число:["']\s*$\s*$\s*[\s\S]*if\s+num\s*>\s*10\s*:\s*[\s\S]*print\s*$\s*["']Число большое["']\s*$\s*[\s\S]*else\s*:\s*[\s\S]*print\s*$\s*["']Число маленькое["']\s*$/is,
+                hint: "Чтобы сравнивать числа, полученные от input(), их нужно превратить в int(). Не забывайте двоеточие после if и else, а также отступы."
+            },
+            {
+                title: "Урок 4: Цикл for",
+                desc: "С помощью цикла for выведите на экран числа от 1 до 5 включительно, каждое с новой строки.",
+                starterCode: "",
+                solution: /for\s+i\s+in\s+range\s*$\s*1\s*,\s*6\s*$\s*:\s*[\s\S]*print\s*$\s*i\s*$/is,
+                hint: "range(1, 6) создаст последовательность от 1 до 5 (6 не включительно)."
+            },
+            {
+                title: "Урок 5: Цикл while",
+                desc: "Напишите программу с циклом while, которая выводит числа от 5 до 1 в обратном порядке.",
+                starterCode: "",
+                solution: /i\s*=\s*5\s*[\s\S]*while\s+i\s*>\s*0\s*:\s*[\s\S]*print\s*$\s*i\s*$\s*[\s\S]*i\s*-\s*=\s*1/is,
+                hint: "Задайте начальное значение переменной до цикла. Внутри цикла не забывайте уменьшать переменную, иначе будет бесконечный цикл."
+            },
+            {
+                title: "Урок 6: Списки (Lists)",
+                desc: "Создайте список fruits с тремя названиями фруктов. Добавьте в конец еще один фрукт. Выведите второй фрукт из списка (индексация с нуля).",
+                starterCode: "",
+                solution: /fruits\s*=\s*$$\s*["']яблоко["']\s*,\s*["']банан["']\s*,\s*["']груша["']\s*$$\s*[\s\S]*fruits\.append\s*$\s*["']апельсин["']\s*$\s*[\s\S]*print\s*$\s*fruits\s*$$\s*1\s*$$\s*$/is,
+                hint: "Добавление в конец — метод .append(). Второй элемент имеет индекс 1."
+            },
+            {
+                title: "Урок 7: Функции (def)",
+                desc: "Создайте функцию greet, которая принимает один аргумент name и выводит 'Привет, [name]!'. Вызовите функцию с именем 'Мир'.",
+                starterCode: "",
+                solution: /def\s+greet\s*$\s*name\s*$\s*:\s*[\s\S]*print\s*$\s*f["']Привет,\s*{\s*name\s*}\s*!\s*["']\s*$\s*[\s\S]*greet\s*$\s*["']Мир["']\s*$/is,
+                hint: "Определение функции начинается с def. Вызов функции — это имя функции и скобки."
+            },
+            {
+                title: "Урок 8: Словари (Dictionaries)",
+                desc: "Создайте словарь user с ключами 'name' и 'city'. Выведите значение по ключу 'name'.",
+                starterCode: "",
+                solution: /user\s*=\s*\{\s*["']name["']\s*:\s*["']Иван["']\s*,\s*["']city["']\s*:\s*["']Москва["']\s*\}\s*[\s\S]*print\s*$\s*user\s*$$\s*["']name["']\s*$$\s*$/is,
+                hint: "Доступ к значению в словаре: имя_словаря[\"ключ\"]."
+            },
+            {
+                title: "Урок 9: Обработка ошибок (try/except)",
+                desc: "Напишите программу, которая просит ввести число и делит 100 на него. Если пользователь введет 0, перехватите ошибку и выведите 'На ноль делить нельзя!'.",
+                starterCode: "",
+                solution: /try\s*:\s*[\s\S]*num\s*=\s*int\s*$\s*input\s*$\s*["']Введите.+число:["']\s*$\s*$\s*[\s\S]*print\s*$\s*100\s*\/\s*num\s*$\s*[\s\S]*except\s+ZeroDivisionError\s*:\s*[\s\S]*print\s*$\s*["']На ноль делить нельзя!["']\s*$/is,
+                hint: "Ошибки, которые могут сломать код, оборачиваются в try. Реакция на ошибку пишется в except."
+            }
+        ];
+
+        let editor;
+        let currentLesson = 0;
+
+        const taskArea = document.getElementById('task-area');
+        const lessonTitle = document.getElementById('lesson-title');
+        const lessonDesc = document.getElementById('lesson-desc');
+        const runBtn = document.getElementById('run-btn');
+        const consoleDiv = document.getElementById('console');
+        const resultMsg = document.getElementById('result-msg');
+        const hintBtn = document.getElementById('hint-btn');
+        const sidebarLinks = document.querySelectorAll('#sidebar a');
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+
+        function loadLesson(index) {
+            currentLesson = index;
+            const lesson = lessons[index];
+            lessonTitle.textContent = lesson.title;
+            lessonDesc.textContent = lesson.desc;
+            resultMsg.textContent = '';
+            consoleDiv.textContent = 'Результат выполнения кода появится здесь...';
+            
+            // Обновление навигации
+            sidebarLinks.forEach(link => link.classList.remove('active'));
+            sidebarLinks[index].classList.add('active');
+
+            // Инициализация редактора
+            if (editor) {
+                editor.setValue(lesson.starterCode);
+            } else {
+                editor = CodeMirror.fromTextArea(document.getElementById('code-editor'), {
+                    mode: 'python',
+                    theme: 'eclipse',
+                    lineNumbers: true,
+                    indentUnit: 4,
+                    tabSize: 4,
+                    extraKeys: {"Ctrl-Enter": runCode}
+                });
+            }
+        }
+
+        function runCode() {
+            const userCode = editor.getValue();
+            consoleDiv.textContent = '';
+            resultMsg.textContent = '';
+
+            // Создание изолированного iframe для выполнения кода
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            document.body.appendChild(iframe);
+            const iframeWindow = iframe.contentWindow;
+
+            // Перехват console.log внутри iframe
+            const originalLog = iframeWindow.console.log;
+            iframeWindow.console.log = function(...args) {
+                const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : String(arg)).join(' ');
+                consoleDiv.textContent += message + '\n';
+                consoleDiv.scrollTop = consoleDiv.scrollHeight;
+                originalLog.apply(iframeWindow.console, args);
+            };
+
+            // Выполнение кода
+            try {
+                // Эмуляция input() через синхронный prompt внутри iframe
+                const originalPrompt = iframeWindow.prompt;
+                const inputs = [];
+                
+                // Собираем все вызовы input из кода пользователя (простая эвристика)
+                const inputMatches = userCode.match(/input\s*$[^)]*$/g) || [];
+                inputMatches.forEach(() => {
+                    const value = iframeWindow.prompt('Программа запрашивает ввод:') || '';
+                    inputs.push(value);
+                });
+                
+                let inputIndex = 0;
+                iframeWindow.prompt = function() {
+                    return inputs[inputIndex++] || '';
+                };
+
+                // Выполняем код
+                const script = document.createElement('script');
+                script.textContent = userCode;
+                iframeWindow.document.body.appendChild(script);
+                
+                // Проверка решения (упрощенная, по регулярному выражению)
+                const lesson = lessons[currentLesson];
+                if (lesson.solution.test(userCode.replace(/\s+/g, ''))) {
+                    resultMsg.textContent = '✅ Отлично! Решение верно.';
+                    resultMsg.style.color = '#4caf50';
+                    sidebarLinks[currentLesson].style.fontWeight = 'bold';
+                } else {
+                    resultMsg.textContent = '❌ Что-то не так. Проверьте логи и условие.';
+                    resultMsg.style.color = '#f44336';
+                }
+
+            } catch (e) {
+                consoleDiv.textContent += 'ОШИБКА ВЫПОЛНЕНИЯ:\n' + e.toString() + '\n';
+                resultMsg.textContent = '❌ Код упал с ошибкой. Смотрите консоль.';
+                resultMsg.style.color = '#f44336';
+            } finally {
+                // Возвращаем оригинальные функции
+                iframeWindow.console.log = originalLog;
+                iframeWindow.prompt = originalPrompt;
+                document.body.removeChild(iframe);
+            }
+        }
+
+        function showHint() {
+            alert(lessons[currentLesson].hint);
+        }
+
+        // Навигация
+        sidebarLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const index = parseInt(e.target.dataset.lesson);
+                loadLesson(index);
+            });
+        });
+
+        runBtn.addEventListener('click', runCode);
+        hintBtn.addEventListener('click', showHint);
+
+        // Мобильное меню
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('open');
+        });
+
+        // Показать кнопку мобильного меню на малых экранах
+        function checkScreen() {
+            if (window.innerWidth < 768) {
+                mobileMenuBtn.style.display = 'block';
+            } else {
+                mobileMenuBtn.style.display = 'none';
+                sidebar.classList.remove('open');
+            }
+        }
+        window.addEventListener('resize', checkScreen);
+        checkScreen();
+
+        // Загрузка первого урока
+        loadLesson(0);
+    </script>
+</body>
+</html>
